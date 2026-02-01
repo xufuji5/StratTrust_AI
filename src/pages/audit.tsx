@@ -1,11 +1,11 @@
 import type { NextPage } from 'next';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface AuditLog {
   id: string;
   traceId: string;
-  timestamp: string;
+  timestamp: Date;
   action: 'inference' | 'execution' | 'verification' | 'settlement';
   actor: string;
   status: 'success' | 'pending' | 'failed';
@@ -41,17 +41,25 @@ const Navbar = () => (
 
 const AuditPage: NextPage = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [selectedAction, setSelectedAction] = useState<string>('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [copySuccess, setCopySuccess] = useState<string>('');
+  const [mounted, setMounted] = useState(false);
 
-  // Mock data
+  const handleCopyHash = (hash: string) => {
+    navigator.clipboard.writeText(hash);
+    setCopySuccess(hash);
+    setTimeout(() => setCopySuccess(''), 2000);
+  };
+
   useEffect(() => {
+    setMounted(true);
     const now = new Date();
+    // Use stable date strings for SSR/Hydration consistency if needed
+    // but here we just ensure we only render on client
     const mockLogs: AuditLog[] = [
       {
         id: 'log_1',
         traceId: 'trace_67890_abc123',
-        timestamp: new Date(now.getTime() - 300000).toLocaleString('zh-CN'),
+        timestamp: new Date(now.getTime() - 300000),
         action: 'inference',
         actor: 'system',
         status: 'success',
@@ -67,7 +75,7 @@ const AuditPage: NextPage = () => {
       {
         id: 'log_2',
         traceId: 'trace_67890_abc123',
-        timestamp: new Date(now.getTime() - 180000).toLocaleString('zh-CN'),
+        timestamp: new Date(now.getTime() - 180000),
         action: 'verification',
         actor: 'tee_signer',
         status: 'success',
@@ -82,7 +90,7 @@ const AuditPage: NextPage = () => {
       {
         id: 'log_3',
         traceId: 'trace_67890_abc123',
-        timestamp: new Date(now.getTime() - 60000).toLocaleString('zh-CN'),
+        timestamp: new Date(now.getTime() - 60000),
         action: 'execution',
         actor: 'executor_agent',
         status: 'success',
@@ -98,7 +106,7 @@ const AuditPage: NextPage = () => {
       {
         id: 'log_4',
         traceId: 'trace_45678_def456',
-        timestamp: new Date(now.getTime() - 1800000).toLocaleString('zh-CN'),
+        timestamp: new Date(now.getTime() - 1800000),
         action: 'settlement',
         actor: 'settlement_engine',
         status: 'success',
@@ -113,7 +121,7 @@ const AuditPage: NextPage = () => {
       {
         id: 'log_5',
         traceId: 'trace_23456_ghi789',
-        timestamp: new Date(now.getTime() - 3600000).toLocaleString('zh-CN'),
+        timestamp: new Date(now.getTime() - 3600000),
         action: 'inference',
         actor: 'system',
         status: 'pending',
@@ -129,7 +137,7 @@ const AuditPage: NextPage = () => {
     setLogs(mockLogs);
   }, []);
 
-  const getActionColor = (action: string) => {
+  const getActionColor = (action: AuditLog['action']) => {
     switch (action) {
       case 'inference': return 'text-blue-400 bg-blue-500/10 border-blue-500/20';
       case 'execution': return 'text-purple-400 bg-purple-500/10 border-purple-500/20';
@@ -138,6 +146,19 @@ const AuditPage: NextPage = () => {
       default: return 'text-gray-400 bg-gray-500/10 border-gray-500/20';
     }
   };
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#050505] text-white flex items-center justify-center">
+        <div className="animate-pulse flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xl">S</span>
+          </div>
+          <div className="text-gray-500 font-medium">加载审计数据...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white">
@@ -171,7 +192,7 @@ const AuditPage: NextPage = () => {
               <tbody className="divide-y divide-white/5">
                 {logs.map((log) => (
                   <tr key={log.id} className="hover:bg-white/5 transition-colors group">
-                    <td className="px-6 py-6 text-sm text-gray-400">{log.timestamp}</td>
+                    <td className="px-6 py-6 text-sm text-gray-400">{log.timestamp.toLocaleString('zh-CN')}</td>
                     <td className="px-6 py-6">
                       <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${getActionColor(log.action)}`}>
                         {log.action}
@@ -180,10 +201,22 @@ const AuditPage: NextPage = () => {
                     <td className="px-6 py-6 text-sm font-medium">{log.actor}</td>
                     <td className="px-6 py-6 text-sm font-mono text-gray-500">{log.traceId}</td>
                     <td className="px-6 py-6">
-                      <div className="flex items-center space-x-2 text-xs font-mono text-blue-400">
+                      <div 
+                        className="flex items-center space-x-2 text-xs font-mono text-blue-400 cursor-pointer group/hash"
+                        onClick={() => log.hash && handleCopyHash(log.hash)}
+                      >
                         <span className="max-w-[120px] truncate">{log.hash || 'N/A'}</span>
                         {log.hash && (
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">🔗</span>
+                          <div className="relative">
+                            <span className="opacity-0 group-hover/hash:opacity-100 transition-opacity">
+                              {copySuccess === log.hash ? '✅' : '📋'}
+                            </span>
+                            {copySuccess === log.hash && (
+                              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-blue-600 text-white text-[10px] rounded whitespace-nowrap">
+                                已复制
+                              </span>
+                            )}
+                          </div>
                         )}
                       </div>
                     </td>
@@ -211,7 +244,9 @@ const AuditPage: NextPage = () => {
             </div>
             <div className="flex items-center space-x-2 font-mono">
               <span>Merkle Root:</span>
-              <span className="text-gray-400">0x7d2a...z678</span>
+              <span className="text-gray-400">
+                {logs.length > 0 ? `0x${logs[0].hash?.substring(2, 10)}...${logs[logs.length-1].hash?.substring(26)}` : 'N/A'}
+              </span>
             </div>
           </div>
         </div>
@@ -230,15 +265,16 @@ const AuditPage: NextPage = () => {
                         'bg-rose-400 shadow-[0_0_8px_rgba(244,63,94,0.5)]'
                       }`} />
                       <span className="font-mono text-sm text-white uppercase">{log.action}</span>
-                      <span className="text-xs text-gray-500">{log.timestamp}</span>
+                      <span className="text-xs text-gray-500">{log.timestamp.toLocaleString('zh-CN')}</span>
                     </div>
                     <div className="text-xs font-mono text-gray-500">ID: {log.id}</div>
                   </div>
                   <div className="bg-black/40 rounded-lg p-4 font-mono text-xs text-blue-300/80 border border-white/5 overflow-x-auto whitespace-pre">
                     {JSON.stringify({
                       trace_id: log.traceId,
-                      ts: Math.floor(new Date(log.timestamp).getTime() / 1000),
+                      ts: Math.floor(log.timestamp.getTime() / 1000),
                       action: log.action,
+                      status: log.status,
                       details: log.details,
                       hash: log.hash,
                       "0g_proof": "valid_merkle_path"
