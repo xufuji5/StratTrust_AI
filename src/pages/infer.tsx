@@ -1,7 +1,6 @@
 import type { NextPage } from 'next';
 import { useState } from 'react';
 import Link from 'next/link';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface TradeSignal {
   symbol: string;
@@ -31,17 +30,6 @@ interface InferenceData {
     attestationReport?: string;
   };
 }
-
-// Mock historical data
-const mockHistoricalData = [
-  { time: '08:00', confidence: 0.65, return: 0.02 },
-  { time: '09:00', confidence: 0.72, return: 0.05 },
-  { time: '10:00', confidence: 0.75, return: 0.08 },
-  { time: '11:00', confidence: 0.78, return: 0.12 },
-  { time: '12:00', confidence: 0.82, return: 0.15 },
-  { time: '13:00', confidence: 0.80, return: 0.18 },
-  { time: '14:00', confidence: 0.85, return: 0.22 },
-];
 
 // Mock trade signals
 const mockSignals: TradeSignal[] = [

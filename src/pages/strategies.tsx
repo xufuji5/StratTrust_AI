@@ -45,62 +45,61 @@ const Navbar = () => (
   </nav>
 );
 
+const mockStrategies: Strategy[] = [
+  {
+    id: 'strat_1',
+    name: 'MEME 币热度选币',
+    version: 'v1.0.0',
+    factorIds: ['sentiment', 'volume', 'liquidity'],
+    creator: 'StratTrust AI',
+    createdAt: '2026-01-25',
+    status: 'active',
+    performanceYTD: 0.245,
+    totalReturn: 0.35,
+    sharpeRatio: 1.82,
+    maxDrawdown: -0.18,
+    winRate: 0.68,
+    trades: 45,
+    hash: '0x8f42...7v8',
+  },
+  {
+    id: 'strat_2',
+    name: '价值投资策略',
+    version: 'v1.2.0',
+    factorIds: ['market_cap', 'holder', 'on_chain'],
+    creator: 'Research Team',
+    createdAt: '2026-01-20',
+    status: 'testing',
+    performanceYTD: 0.128,
+    totalReturn: 0.18,
+    sharpeRatio: 1.45,
+    maxDrawdown: -0.12,
+    winRate: 0.62,
+    trades: 32,
+    hash: '0x7d2a...z678',
+  },
+  {
+    id: 'strat_3',
+    name: '流动性挖矿策略',
+    version: 'v2.0.0',
+    factorIds: ['liquidity', 'apr', 'risk'],
+    creator: 'StratTrust AI',
+    createdAt: '2026-01-10',
+    status: 'active',
+    performanceYTD: 0.185,
+    totalReturn: 0.28,
+    sharpeRatio: 1.65,
+    maxDrawdown: -0.15,
+    winRate: 0.71,
+    trades: 58,
+    hash: '0x1a2b...4s5',
+  },
+];
+
 const StrategiesPage: NextPage = () => {
   const [strategies, setStrategies] = useState<Strategy[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-
-  // Mock data
-  const mockStrategies: Strategy[] = [
-    {
-      id: 'strat_1',
-      name: 'MEME 币热度选币',
-      version: 'v1.0.0',
-      factorIds: ['sentiment', 'volume', 'liquidity'],
-      creator: 'StratTrust AI',
-      createdAt: '2026-01-25',
-      status: 'active',
-      performanceYTD: 0.245,
-      totalReturn: 0.35,
-      sharpeRatio: 1.82,
-      maxDrawdown: -0.18,
-      winRate: 0.68,
-      trades: 45,
-      hash: '0x8f42...7v8',
-    },
-    {
-      id: 'strat_2',
-      name: '价值投资策略',
-      version: 'v1.2.0',
-      factorIds: ['market_cap', 'holder', 'on_chain'],
-      creator: 'Research Team',
-      createdAt: '2026-01-20',
-      status: 'testing',
-      performanceYTD: 0.128,
-      totalReturn: 0.18,
-      sharpeRatio: 1.45,
-      maxDrawdown: -0.12,
-      winRate: 0.62,
-      trades: 32,
-      hash: '0x7d2a...z678',
-    },
-    {
-      id: 'strat_3',
-      name: '流动性挖矿策略',
-      version: 'v2.0.0',
-      factorIds: ['liquidity', 'apr', 'risk'],
-      creator: 'StratTrust AI',
-      createdAt: '2026-01-10',
-      status: 'active',
-      performanceYTD: 0.185,
-      totalReturn: 0.28,
-      sharpeRatio: 1.65,
-      maxDrawdown: -0.15,
-      winRate: 0.71,
-      trades: 58,
-      hash: '0x1a2b...4s5',
-    },
-  ];
 
   useEffect(() => {
     const timer = setTimeout(() => {
