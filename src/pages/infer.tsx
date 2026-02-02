@@ -120,33 +120,57 @@ const InferencePage: NextPage = () => {
       setLoading(true);
       setError('');
 
-      // Mock inference data
-      const mockInference: InferenceData = {
-        traceId: `trace_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        signals: mockSignals,
+      const response = await fetch('/api/ai/infer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          factors: {
+            oif: Math.random(),
+            sentiment_velocity: Math.random(),
+            smart_money: Math.random() * 1000000,
+            liquidity: Math.random() * 10000000
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || '推理失败');
+      }
+
+      const result = await response.json();
+
+      // 将新 API 的结果映射到现有的 UI 结构
+      const mappedInference: InferenceData = {
+        traceId: result.provenance.traceId,
+        signals: [
+          {
+            symbol: result.signal.symbol,
+            action: result.signal.action,
+            weight: 1.0,
+            confidence: result.signal.confidence,
+            reason: result.signal.reasoning,
+          }
+        ],
         portfolio: {
-          totalWeight: 0.84,
-          diversification: 0.78,
-          expectedReturn: 0.202,
-          expectedVolatility: 0.18,
+          totalWeight: 1.0,
+          diversification: 0.0,
+          expectedReturn: 0.0,
+          expectedVolatility: 0.0,
         },
         metadata: {
-          confidence: 0.82,
-          warnings: [
-            '市场波动率较高，请谨慎交易',
-            'MEME 币 market 风险较大，建议控制仓位',
-            '建议在流动性充足时入场',
-          ],
-          timestamp: new Date().toLocaleString('zh-CN'),
-          modelVersion: 'v1.2.0',
-          inputHash: '0x7a3c8f2...e91b',
-          teeSignature: '0xef45a1b2c3d4e5f6a7b8c9d0e1f2a3b4...',
+          confidence: result.signal.confidence,
+          warnings: [],
+          timestamp: result.provenance.verifiedAt,
+          modelVersion: 'deepseek-v3-0g',
+          inputHash: result.provenance.storageRoot,
+          teeSignature: result.provenance.chainTx,
         },
       };
 
-      // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      setInference(mockInference);
+      setInference(mappedInference);
     } catch (err) {
       setError(err instanceof Error ? err.message : '网络错误');
     } finally {

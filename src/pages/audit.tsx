@@ -50,6 +50,34 @@ const AuditPage: NextPage = () => {
     setTimeout(() => setCopySuccess(''), 2000);
   };
 
+  const verifyLog = async (log: AuditLog) => {
+    if (!log.hash) return;
+    
+    try {
+      setCopySuccess(`verifying_${log.id}`);
+      const response = await fetch('/api/storage/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rootHash: log.hash,
+          expectedData: { inputHash: log.details.inputHash }
+        })
+      });
+      
+      const result = await response.json();
+      if (result.isValid) {
+        alert(`验证成功！Trace ID: ${log.traceId} 的数据在 0G Storage 中完整且匹配。`);
+      } else {
+        alert(`验证失败：数据不匹配或未找到。`);
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      alert('验证过程中出错。');
+    } finally {
+      setCopySuccess('');
+    }
+  };
+
   useEffect(() => {
     setMounted(true);
     const now = new Date();
@@ -201,22 +229,28 @@ const AuditPage: NextPage = () => {
                     <td className="px-6 py-6 text-sm font-medium">{log.actor}</td>
                     <td className="px-6 py-6 text-sm font-mono text-gray-500">{log.traceId}</td>
                     <td className="px-6 py-6">
-                      <div 
-                        className="flex items-center space-x-2 text-xs font-mono text-blue-400 cursor-pointer group/hash"
-                        onClick={() => log.hash && handleCopyHash(log.hash)}
-                      >
-                        <span className="max-w-[120px] truncate">{log.hash || 'N/A'}</span>
-                        {log.hash && (
-                          <div className="relative">
-                            <span className="opacity-0 group-hover/hash:opacity-100 transition-opacity">
-                              {copySuccess === log.hash ? '✅' : '📋'}
-                            </span>
-                            {copySuccess === log.hash && (
-                              <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-blue-600 text-white text-[10px] rounded whitespace-nowrap">
-                                已复制
+                      <div className="flex flex-col space-y-1">
+                        <div 
+                          className="flex items-center space-x-2 text-xs font-mono text-blue-400 cursor-pointer group/hash"
+                          onClick={() => log.hash && handleCopyHash(log.hash)}
+                        >
+                          <span className="max-w-[120px] truncate">{log.hash || 'N/A'}</span>
+                          {log.hash && (
+                            <div className="relative">
+                              <span className="opacity-0 group-hover/hash:opacity-100 transition-opacity">
+                                {copySuccess === log.hash ? '✅' : '📋'}
                               </span>
-                            )}
-                          </div>
+                            </div>
+                          )}
+                        </div>
+                        {log.hash && (
+                          <button 
+                            onClick={() => verifyLog(log)}
+                            className="text-[10px] text-emerald-500 hover:text-emerald-400 font-medium underline text-left"
+                            disabled={copySuccess === `verifying_${log.id}`}
+                          >
+                            {copySuccess === `verifying_${log.id}` ? '验证中...' : '链上验证'}
+                          </button>
                         )}
                       </div>
                     </td>
